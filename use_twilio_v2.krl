@@ -1,14 +1,12 @@
 
 ruleset io.picolabs.use_twilio_v2 {
   meta {
-    key twilio {
-          "account_sid": "<your SID goes here>", 
-          "auth_token" : "<your auth token goes here>"
-    }
-    use module io.picolabs.twilio alias twilio
-        with account_sid = keys:twilio{"account_sid"}
-             auth_token =  keys:twilio{"auth_token"}
-  shares __testing
+	
+	use module io.picolabs.twilokeys
+	use module io.picolabs.twilio alias twilio
+        	with account_sid = keys:twilio{"account_sid"}
+             	auth_token =  keys:twilio{"auth_token"}
+  	shares __testing
      
   }
  
@@ -18,8 +16,8 @@ ruleset io.picolabs.use_twilio_v2 {
 			  {"name":"__testing"}],
 		"events":[
 			{"domain":"test","type": "new_message",
-			"attrs": ["to"], "attrs": ["from"], "attrs": ["message"]}]
-
+			"attrs": ["to","from","message"]}]
+		}
 	} 
 
   rule test_send_sms {
