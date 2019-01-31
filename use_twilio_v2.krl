@@ -16,9 +16,23 @@ ruleset io.picolabs.use_twilio_v2 {
 			  {"name":"__testing"}],
 		"events":[
 			{"domain":"test","type": "new_message",
-			"attrs": ["to","from","message"]}]
+			"attrs": ["to","from","message"]},
+		
+			{"domain":"test","type":"get_message",
+			"attrs":["msg_id"]}
+		]}
+		
+	messages = function(msg_id, send_num, recv_num){
+
+		if msg_id then
+			twilio:get_sms(event:attr("msg_id"))
+	
+		else{
+			twilio:get_sms_list(event:attr("send_num"),
+					    event:attr("recv_num"))
 		}
-	} 
+	}
+	
 
   rule test_send_sms {
     select when test new_message
@@ -27,4 +41,5 @@ ruleset io.picolabs.use_twilio_v2 {
                     event:attr("message")
                    )
   }
+
 }
