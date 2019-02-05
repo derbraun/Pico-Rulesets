@@ -4,7 +4,7 @@ ruleset io.picolabs.twilio {
     configure using account_sid = ""
                     auth_token = ""
     provides
-      send_sms
+      send_sms, messages
 
   }
   global {
@@ -17,7 +17,11 @@ ruleset io.picolabs.twilio {
       ]
       
     }
-    
+   
+    messages = function(url){
+      http:get(url){"content"}.decode()
+    }
+   
     send_sms = defaction(to, from, message) {
        base_url = <<https://#{account_sid}:#{auth_token}@api.twilio.com/2010-04-01/Accounts/#{account_sid}/>>
        http:post(base_url + "Messages.json", form = {

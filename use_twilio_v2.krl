@@ -5,7 +5,7 @@ ruleset io.picolabs.use_twilio_v2 {
         with account_sid = keys:twilio{"account_sid"}
              auth_token =  keys:twilio{"auth_token"}
              
-  shares __testing, messages
+  shares __testing
      
   }
  
@@ -21,9 +21,6 @@ ruleset io.picolabs.use_twilio_v2 {
 			}]
     }
     
-    messages = function(url){
-      http:get(url){"content"}.decode()
-    }
   }
 
   rule test_send_sms {
@@ -47,7 +44,7 @@ ruleset io.picolabs.use_twilio_v2 {
   
     }
     
-    send_directive("message", {"message":messages(base_url+query)})
+    send_directive("message", {"message":twilio:messages(base_url+query)})
     always{
       log info query
     }
