@@ -1,8 +1,8 @@
 ruleset temperature_store {
   meta {
-    shares __testing, temperatures, threshold_violations, inrange_temperatures
+    shares __testing, temperatures, threshold_violations, inrange_temperatures, current_temp
     
-    provides temperatures, threshold_violations, inrange_temperatures
+    provides temperatures, threshold_violations, inrange_temperatures, current_temp
     
   }
   global {
@@ -18,14 +18,18 @@ ruleset temperature_store {
       ]
     }
     
-    init_temp = [ { "temperature": "0", "timestamp": "N/A" } ]
+    init_temp = [ { "temperature": "", "timestamp": "" } ]
+    
+    current_temp = function(){
+     ent:temp[ent:temp.length() - 1].temperature
+    }
     
     temperatures = function(){
-      ent:temp
+      ent:temp.defaultsTo([])
     }
     
     threshold_violations = function(){
-      ent:violations
+      ent:violations.defaultsTo([])
     }
     
     inrange_temperatures = function(){
@@ -101,4 +105,5 @@ ruleset temperature_store {
   }
   
 }
+
 
