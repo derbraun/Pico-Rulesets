@@ -5,14 +5,15 @@ ruleset wovyn_base {
     with account_sid = keys:twilio{"account_sid"}
              auth_token = keys:twilio{"auth_token"}
     
-    shares __testing, process_heartbeat
+    shares __testing, process_heartbeat, get_threshold, get_sms_number
+    provides get_threshold, get_sms_number
+    
   }
   
   /****************************************************************************************/
  
   global {
-    temperature_threshold = 75
-    sms_number = "+18018850341"
+  
     sms_sender = "+14352225537"
     
     
@@ -24,6 +25,16 @@ ruleset wovyn_base {
        { "domain": "wovyn", "type": "heartbeat", "attrs": [ "info"] }
       ]
     }
+
+
+    get_threshold = function(){
+      ent:temperature_threshold
+    };
+    
+    get_sms_number = function(){
+      ent:sms_number
+    };
+    
   }
   
   /****************************************************************************************/
@@ -82,7 +93,7 @@ ruleset wovyn_base {
       attributes{
         "temperature": event:attrs{"temperature"}, 
         "timestamp": event:attrs{"timestamp"},
-        "threshold": temperature_threshold
+        "threshold": ent:temperature_threshold
       }
     }
     
@@ -99,10 +110,20 @@ ruleset wovyn_base {
       
     }
     
-    twilio:send_sms(sms_number, sms_sender, message)
+    twilio:send_sms(ent:sms_number, sms_sender, message)
     //send_directive("error", {"error": message})
             
   }
   
+  rule settings_update{
+    select when profile update
+    
+    always{
+      ent:temperature_threshold := event:attrs{"threshold"}.defaultsTo(75).klog("Threshold:");
+      ent:sms_number := event:attrs{"sms_number"}.defaultsTo("+18018850341").klog("SMS Number:")
+    }
+  }
+  
 }
+
 
