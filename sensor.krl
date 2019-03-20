@@ -15,7 +15,7 @@ ruleset sensor {
   }
   
   rule pico_ruleset_added {
-    select when wrangler ruleset_added
+    select when wrangler ruleset_added where rids>< meta:rid
     pre{
       name = event:attr("name")
       threshold = event:attr("rs_attrs"){"threshold"}

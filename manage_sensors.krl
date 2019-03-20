@@ -1,9 +1,10 @@
 ruleset manage_sensors {
   meta {
-    shares __testing, sensors, get_children, get_threshold
+    shares __testing, sensors, get_children, get_threshold, get_all_temps
     use module io.picolabs.wrangler alias wrangler
+    use module temperature_store alias temp
     
-    provides get_children, sensors, get_threshold
+    provides get_children, sensors, get_threshold, get_all_temps
      
   }
   global {
@@ -13,7 +14,8 @@ ruleset manage_sensors {
     __testing = { "queries":
       [ { "name": "__testing" },
         { "name": "sensors"},
-        { "name": "get_children"}
+        { "name": "get_children"},
+        { "name": "get_all_temps"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ {"domain": "sensor", "type": "new_sensor", "attrs": ["name"]},
@@ -34,6 +36,10 @@ ruleset manage_sensors {
     
     get_threshold = function(){
       temperature_threshold
+    }
+    
+    get_all_temps = function(){
+      temp:temperatures()
     }
   }
   
@@ -66,7 +72,7 @@ ruleset manage_sensors {
         "threshold": temperature_threshold,
         
         // sends the rule id for app_section during pico creation
-        "rids": ["temperature_store", "wovyn_base", "sensor_profile", "sensor"]
+        "rids": ["io.picolabs.logging","wovyn_base", "temperature_store", "sensor_profile", "sensor"]
       }
     
     }
@@ -86,6 +92,12 @@ ruleset manage_sensors {
     
     if exists.klog("found name") then
       noop()
+      // event:send(
+      //   {
+      //     "eci": eci, "eid": "install-ruleset",
+      //     "domain": "wrangler", "type":"install_rulesets_requested",
+      //     "attrs": { "rids": ["wovyn_base", "temperature_store","sensor_profile", "sensor"]}
+      //   })
     
     notfired{
       
@@ -98,7 +110,7 @@ ruleset manage_sensors {
   
   //-----------------------------------------------------------------
   
-  rule sensor_offline{
+  rule sensor_unneeded{
     select when sensor unneeded_sensor
     pre{
       name = event:attr("name")

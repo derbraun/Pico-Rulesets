@@ -1,11 +1,11 @@
 {
 	"location":{
-        "description":"Moenchengladbach",
+        "description":"Timbuktu",
         "imageURL":"http://www.wovyn.com/assets/img/wovyn-logo-small.png",
         "latitude":"16.77078",
         "longitude":"-3.00819"
     },
-    "name":"Bob's Wovyn",
+    "name":"Wovyn_2BD537",
     "threshold": 80,
     "phone_number": "+18017639366"
 }
