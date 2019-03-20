@@ -41,8 +41,6 @@ sleep 3
 echo ""
 echo "Adding Temperature Reading over Threshold to Test"
 
-3
-
 curl -X POST "http://localhost:8080/sky/event/RCrkgymum5FQXs996crBR6/123/wovyn/heartbeat" -d @temp.json -H "Content-Type: application/json" | grep Violation
 
 sleep 3

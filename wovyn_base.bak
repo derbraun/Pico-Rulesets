@@ -18,9 +18,7 @@ ruleset wovyn_base {
     
     
     __testing = { "queries":
-      [ { "name": "__testing" },
-        { "name": "get_threshold"},
-        { "name": "get_sms_number"}
+      [ { "name": "__testing" }
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "d1", "type": "t1" }
@@ -76,7 +74,7 @@ ruleset wovyn_base {
     select when wovyn new_temperature_reading
     
     pre{
-      tempDiff = ent:temperature_threshold - event:attrs{"temperature"}.klog("tempDiff")
+      tempDiff = temperature_threshold <=> event:attrs{"temperature"}
       
     }
     
@@ -127,6 +125,5 @@ ruleset wovyn_base {
   }
   
 }
-
 
 

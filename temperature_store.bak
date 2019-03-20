@@ -7,10 +7,7 @@ ruleset temperature_store {
   }
   global {
     __testing = { "queries":
-      [ { "name": "__testing" },
-        { "name": "current_temp"},
-        { "name": "temperatures"},
-        { "name": "threshold_violations"}
+      [ { "name": "__testing" }
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ { "domain": "wovyn", "type": "new_temperature_reading", "attrs": ["temperature", "timestamp"] },
