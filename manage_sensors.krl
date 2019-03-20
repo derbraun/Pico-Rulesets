@@ -39,7 +39,10 @@ ruleset manage_sensors {
     }
     
     get_all_temps = function(){
-      temp:temperatures()
+      arr = ent:sensors.values().klog();
+      arr.map(function(eci){
+        http:get("http://localhost:8080/sky/cloud/" + eci +"/temperature_store/temperatures")
+      });
     }
   }
   
