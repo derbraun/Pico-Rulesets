@@ -1,5 +1,6 @@
 ruleset wovyn_base {
   meta {
+    use module io.picolabs.subscription alias Subscriptions
     use module io.picolabs.twiliokeys
     use module io.picolabs.twilio alias twilio
     with account_sid = keys:twilio{"account_sid"}
@@ -75,21 +76,28 @@ ruleset wovyn_base {
   rule find_high_temps{
     select when wovyn new_temperature_reading
     
+    //Sends theshold_violation event to all controllers
+    foreach Subscriptions:established("Tx_role", "controller") setting (subscription)
+    
     pre{
-      tempDiff = ent:temperature_threshold - event:attrs{"temperature"}.klog("tempDiff")
-      
+      temp = event:attrs{"temperature"}.klog("passed temperature: ")
+      tempDiff = ent:temperature_threshold - temp
+      tempDiff = tempDiff.klog("tempDiff:")
     }
     
-    // choose tempDiff {
-    //   1 => send_directive("No threshold violation found")
-    //   0 => send_directive("No threshold violation found")
-    //   -1 => send_directive("Threshold violation found!")
-    // }
+    if tempDiff < 0 then
+      event:send({
+        "eci": subscription{"Tx"}, "eid": "update",
+        "domain": "wovyn", "type": "threshold_violation",
+        "attrs": {
+          "temperature": event:attrs{"temperature"},
+          "timestamp": event:attrs{"timestamp"},
+          "threshold": ent:temperature_threshold
+        }
+      })
     
-    if tempDiff >= 0 then
-      send_directive("No threshold violation found")
-      
-    notfired{
+    //Store in sensor's threshold violations
+    fired{
       
       raise wovyn event "threshold_violation"
       attributes{
@@ -102,8 +110,8 @@ ruleset wovyn_base {
   }
   
   /****************************************************************************************/
- 
-  
+  /* Taken over by sensor profile
+  =========================================================================================
   rule threshold_notification{
     select when wovyn threshold_violation
     
@@ -116,13 +124,16 @@ ruleset wovyn_base {
     //send_directive("error", {"error": message})
             
   }
+  */
+  
+  /****************************************************************************************/
   
   rule settings_update{
     select when profile update
     
     always{
       ent:temperature_threshold := event:attrs{"threshold"}.defaultsTo(75).klog("Threshold:");
-      ent:sms_number := event:attrs{"sms_number"}.defaultsTo("+18018850341").klog("SMS Number:")
+      //ent:sms_number := event:attrs{"sms_number"}.defaultsTo("+18018850341").klog("SMS Number:")
     }
   }
   

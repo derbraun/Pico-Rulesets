@@ -1,46 +1,28 @@
-ruleset sensor {
+ruleset test.subscribee {
   meta {
-    shares __testing
-    use module sensor_profile
     use module io.picolabs.subscription alias Subscriptions
-
     
+    shares __testing, status
   }
   global {
     __testing = { "queries":
-      [ { "name": "__testing" }
-
+      [ { "name": "__testing" },
+        { "name": "status"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
-      [ {"domain": "subscribee", "type": "update"}
+      [ {"domain": "subscriber", "type": "trouble"},
+        {"domain": "subscribee", "type": "update"}
         //{ "domain": "d1", "type": "t1" }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
     
-  }
-  
-  rule pico_ruleset_added {
-    select when wrangler ruleset_added where rids >< meta:rid
-    pre{
-      name = event:attr("name")
-      threshold = event:attr("rs_attrs"){"threshold"}
-    }
-      
-    always{
-      ent:name := name.defaultsTo("");
-      
-      raise sensor event "profile_updated"
-      attributes{
-        "name": ent:name,
-        "threshold": threshold,
-        "phone_number": "+18018850341"
-      }
+    status = function(){
+      ent:status.defaultsTo("inactive") + " level " + ent:serial.defaultsTo(0)
     }
   }
   
-  //------------------------------------------------------------------------------------------
-  
+  //Accept all subscriber requests
   rule auto_accept{
     select when wrangler inbound_pending_subscription_added
     pre{
@@ -52,7 +34,27 @@ ruleset sensor {
         attributes attributes
     }
   }
-  //----------------------------------------------------------------------------------------
+  
+  
+  //Recieved a hat lifted event from subscriber
+  rule subscriber_hat_lifted{
+    select when subscriber hat_is_lifted
+    
+    fired{
+      ent:status := "active";
+      ent:serial := ent:serial.defaultsTo(0) + 1
+      
+    }
+  }
+  
+  //setting to inactive state
+  rule subscriber_gets_in_trouble{
+    select when subscriber trouble
+    
+    fired{
+      ent:status := "inactive"
+    }
+  }
   
   //Sending an update to subscriber
   rule subscribee_update{
@@ -70,7 +72,5 @@ ruleset sensor {
     })
     
   }
-  //----------------------------------------------------------------------------------------
-
 }
 
