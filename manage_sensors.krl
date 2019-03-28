@@ -1,15 +1,15 @@
 ruleset manage_sensors {
   meta {
-    shares __testing, sensors, get_children, get_threshold, get_all_temps
+    shares __testing, sensors, get_children, get_all_temps
     use module io.picolabs.wrangler alias wrangler
     use module temperature_store alias temp
     use module io.picolabs.subscription alias Subscriptions
     
-    provides get_children, sensors, get_threshold, get_all_temps
+    provides get_children, sensors, get_all_temps
      
   }
   global {
-    temperature_threshold = 78
+
     init_sensor = [ { "name": "Initialization", "eci": ""} ]
     
     __testing = { "queries":
@@ -39,9 +39,6 @@ ruleset manage_sensors {
       
     }
     
-    get_threshold = function(){
-      temperature_threshold
-    }
     
     get_all_temps = function(){
       
@@ -86,8 +83,7 @@ ruleset manage_sensors {
       attributes{
         "name": name,
         "color": "#ffff44",
-        "threshold": temperature_threshold,
-
+        
         // sends the rule id for app_section during pico creation
         "rids": ["io.picolabs.logging","wovyn_base", "temperature_store", "sensor"]  
       }

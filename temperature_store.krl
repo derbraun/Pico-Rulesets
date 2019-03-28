@@ -9,8 +9,8 @@ ruleset temperature_store {
     __testing = { "queries":
       [ { "name": "__testing" },
         { "name": "current_temp"},
-        { "name": "temperatures"},
-        { "name": "threshold_violations"}
+        { "name": "temperatures"}
+      //  { "name": "threshold_violations"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ { "domain": "wovyn", "type": "new_temperature_reading", "attrs": ["temperature", "timestamp"] },
@@ -21,7 +21,7 @@ ruleset temperature_store {
       ]
     }
     
-    init_temp = [ { "temperature": "", "timestamp": "" } ]
+    //init_temp = [ { "temperature": "", "timestamp": "" } ]
     
     current_temp = function(){
      ent:temp[ent:temp.length() - 1].temperature
@@ -31,9 +31,9 @@ ruleset temperature_store {
       ent:temp.defaultsTo([])
     }
     
-    threshold_violations = function(){
-      ent:violations.defaultsTo([])
-    }
+   // threshold_violations = function(){
+  //    ent:violations.defaultsTo([])
+  //  }
     
     inrange_temperatures = function(){
       temps = temperatures().klog("calling temperature function:");
@@ -65,7 +65,8 @@ ruleset temperature_store {
   }
   
   //-------------------------------------------------------------------------------------------------------
-  
+  /*   Moved to sensor_profile
+  =========================================================================================================
   rule collect_threshold_violations{
     select when wovyn threshold_violation
      
@@ -84,7 +85,7 @@ ruleset temperature_store {
     }
     
   }
-    
+    */
     
   rule clear_temperatures{
     select when sensor reading_reset

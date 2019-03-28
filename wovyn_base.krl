@@ -6,7 +6,7 @@ ruleset wovyn_base {
     with account_sid = keys:twilio{"account_sid"}
              auth_token = keys:twilio{"auth_token"}
     
-    shares __testing, process_heartbeat, get_threshold, get_sms_number
+    shares __testing, process_heartbeat, get_sms_number
     provides get_threshold, get_sms_number
     
   }
@@ -28,11 +28,6 @@ ruleset wovyn_base {
        { "domain": "wovyn", "type": "heartbeat", "attrs": [ "info"] }
       ]
     }
-
-
-    get_threshold = function(){
-      ent:temperature_threshold
-    };
     
     get_sms_number = function(){
       ent:sms_number
@@ -45,6 +40,9 @@ ruleset wovyn_base {
   rule process_heartbeat{
     select when wovyn heartbeat
     
+    //Sends temperature_reading to all controllers
+    foreach Subscriptions:established("Tx_role", "controller") setting (subscription)
+    
     pre{
       
       heartbeats = event:attrs
@@ -55,23 +53,32 @@ ruleset wovyn_base {
     
     if generic then
     
-      send_directive("info", {"info": "heartbeat recieved"})
+      //send_directive("info", {"info": "heartbeat recieved"});
       //send_directive("heartbeat", {"heartbeat": hb{"heartbeat"}});
-      
-   always{
-     raise wovyn event "new_temperature_reading"
-     attributes {
-       "temperature":event:attrs{["genericThing", "data", "temperature"]}[0]{"temperatureF"}, "timestamp": time:now()
-       
-     }
+    
+      event:send({
+        "eci": subscription{"Tx"}, "eid": "update",
+        "domain": "wovyn", "type": "new_temperature_reading",
+        "attrs": {
+          "temperature":event:attrs{["genericThing", "data", "temperature"]}[0]{"temperatureF"}, 
+          "timestamp": time:now()
+        }
+     })
      
-   }
+    // raise wovyn event "new_temperature_reading"
+    // attributes {
+    //   "temperature":event:attrs{["genericThing", "data", "temperature"]}[0]{"temperatureF"}, "timestamp": time:now()
+       
+    // }
+     
+   
     
   }
   
   
-  /****************************************************************************************/
- 
+  /****************************************************************************************
+    Taken over by sensor profile
+  =========================================================================================  
   
   rule find_high_temps{
     select when wovyn new_temperature_reading
@@ -91,25 +98,23 @@ ruleset wovyn_base {
         "domain": "wovyn", "type": "threshold_violation",
         "attrs": {
           "temperature": event:attrs{"temperature"},
-          "timestamp": event:attrs{"timestamp"},
-          "threshold": ent:temperature_threshold
+          "timestamp": event:attrs{"timestamp"}
         }
       })
     
-    //Store in sensor's threshold violations
-    fired{
+    //notfired{
       
-      raise wovyn event "threshold_violation"
-      attributes{
-        "temperature": event:attrs{"temperature"}, 
-        "timestamp": event:attrs{"timestamp"},
-        "threshold": ent:temperature_threshold
-      }
-    }
+    //  raise wovyn event "threshold_violation"
+    //  attributes{
+    //    "temperature": event:attrs{"temperature"}, 
+    //    "timestamp": event:attrs{"timestamp"},
+    //    "threshold": ent:temperature_threshold
+    //  }
+    //}
     
   }
   
-  /****************************************************************************************/
+  ****************************************************************************************/
   /* Taken over by sensor profile
   =========================================================================================
   rule threshold_notification{
@@ -128,14 +133,14 @@ ruleset wovyn_base {
   
   /****************************************************************************************/
   
-  rule settings_update{
-    select when profile update
+  // rule settings_update{
+  //   select when profile update
     
-    always{
-      ent:temperature_threshold := event:attrs{"threshold"}.defaultsTo(75).klog("Threshold:");
-      //ent:sms_number := event:attrs{"sms_number"}.defaultsTo("+18018850341").klog("SMS Number:")
-    }
-  }
+  //   always{
+  //     ent:temperature_threshold := event:attrs{"threshold"}.defaultsTo(75).klog("Threshold:");
+  //     //ent:sms_number := event:attrs{"sms_number"}.defaultsTo("+18018850341").klog("SMS Number:")
+  //   }
+  // }
   
 }
 
