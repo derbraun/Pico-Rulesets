@@ -6,7 +6,7 @@ ruleset wovyn_base {
     with account_sid = keys:twilio{"account_sid"}
              auth_token = keys:twilio{"auth_token"}
     
-    shares __testing, process_heartbeat, get_sms_number
+    shares __testing, process_heartbeat, get_sms_number, temperatures, current_temp
     provides get_threshold, get_sms_number
     
   }
@@ -20,18 +20,28 @@ ruleset wovyn_base {
     
     __testing = { "queries":
       [ { "name": "__testing" },
-        { "name": "get_threshold"},
+        { "name": "current_temp"},
+        { "name": "temperatures"},
         { "name": "get_sms_number"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "d1", "type": "t1" }
-       { "domain": "wovyn", "type": "heartbeat", "attrs": [ "info"] }
+        { "domain": "sensor", "type": "reading_reset"},
+        { "domain": "wovyn", "type": "heartbeat", "attrs": [ "info"] }
       ]
     }
     
     get_sms_number = function(){
       ent:sms_number
     };
+    
+    current_temp = function(){
+      ent:temp[ent:temp.length() - 1].temperature
+    }
+    
+    temperatures = function(){
+      ent:temp.defaultsTo([])
+    }
     
   }
   
@@ -49,6 +59,9 @@ ruleset wovyn_base {
       hb = heartbeats{"heartbeat"}
       generic = heartbeats{"genericThing"}
       
+      temperature = event:attrs{["genericThing", "data", "temperature"]}[0]{"temperatureF"}.klog("temperature: ")
+      timestamp = time:strftime(time:now(), "%c").klog("timestamp:")
+      
     }
     
     if generic then
@@ -60,10 +73,17 @@ ruleset wovyn_base {
         "eci": subscription{"Tx"}, "eid": "update",
         "domain": "wovyn", "type": "new_temperature_reading",
         "attrs": {
-          "temperature":event:attrs{["genericThing", "data", "temperature"]}[0]{"temperatureF"}, 
-          "timestamp": time:now()
+          "temperature": temperature, 
+          "timestamp": timestamp
         }
      })
+     
+     
+     fired{
+      
+      ent:temp := ent:temp.defaultsTo([]);
+      ent:temp := ent:temp.append({"temperature":temperature , "timestamp": timestamp})
+    }
      
     // raise wovyn event "new_temperature_reading"
     // attributes {
@@ -75,6 +95,39 @@ ruleset wovyn_base {
     
   }
   
+  //---------------------------------------------------------------------------------------------
+  
+    rule clear_temperatures{
+    select when sensor reading_reset
+    
+    always{
+      clear ent:temp;
+    }
+  }
+  
+  //----------------------------------------------------------------------------------------------
+  
+  rule create_report{   
+    select when temp report
+    
+    foreach Subscriptions:established("Tx_role", "controller") setting (subscription)
+    
+    pre{
+        rcn = event:attr("rcn").klog("rcn from manager:")
+        temps = temperatures().klog("temperature report:")
+      }
+    
+    event:send({
+      "eci": subscription{"Tx"}, "eid": "report",
+      "domain": "temp_report", "type": "created",
+      "attrs":{
+        "rcn": rcn,
+        "temperatures": temps
+      }
+    })
+    
+  }
+     
   
   /****************************************************************************************
     Taken over by sensor profile
